@@ -129,10 +129,7 @@ fn report_c_functions_in_pure_v_code(opt Options, path string) {
 	for f in files {
 		contents := os.read_file(f) or { panic(err) }
 		lines := contents.split('\n')
-		// Skip test files
-		//if f.ends_with('_test.v') {
-		//	continue
-		//}
+
 		mut results := []CFN{}
 		for i, line in lines {
 			if line.contains(' C.') {
@@ -142,31 +139,6 @@ fn report_c_functions_in_pure_v_code(opt Options, path string) {
 				clean_line := line
 				results << CFN{i + 1, clean_line}
 				// println('Match: $line')
-				/*
-				if i > 0 && lines.len > 0 {
-					mut line_above := lines[i - 1]
-					if !line_above.starts_with('//') {
-						mut tags := []string{}
-						mut grab := true
-						for j := i - 1; j >= 0; j-- {
-							prev_line := lines[j]
-							if prev_line.contains('}') { // We've looked back to the above scope, stop here
-								break
-							} else if prev_line.starts_with('[') {
-								tags << collect_tags(prev_line)
-								continue
-							} else if prev_line.starts_with('//') { // Single-line comment
-								grab = false
-								break
-							}
-						}
-						if grab {
-							clean_line := line.all_before_last(' {')
-							info << UndocumentedFN{i + 1, clean_line, tags}
-						}
-					}
-				}
-				*/
 			}
 		}
 		if results.len > 0 {
