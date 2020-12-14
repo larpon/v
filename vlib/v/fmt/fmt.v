@@ -615,7 +615,10 @@ pub fn (mut f Fmt) struct_decl(node ast.StructDecl) {
 		if comments_len + field.name.len > max {
 			max = comments_len + field.name.len
 		}
-		ft := f.no_cur_mod(f.table.type_to_str(field.typ))
+		mut ft := f.no_cur_mod(f.table.type_to_str(field.typ))
+		if !ft.starts_with('C.') && !ft.starts_with('JS.') {
+			ft = f.short_module(ft)
+		}
 		field_types << ft
 		if ft.len > max_type {
 			max_type = ft.len
@@ -1290,13 +1293,13 @@ pub fn (mut f Fmt) short_module(name string) string {
 	if vals.len < 2 {
 		return name
 	}
-	mname := vals[vals.len - 2]
+	mname, tprefix := f.get_modname_prefix(vals[vals.len - 2])
 	symname := vals[vals.len - 1]
 	aname := f.mod2alias[mname]
 	if aname == '' {
 		return symname
 	}
-	return '${aname}.$symname'
+	return '$tprefix${aname}.$symname'
 }
 
 pub fn (mut f Fmt) lock_expr(lex ast.LockExpr) {
@@ -1858,15 +1861,17 @@ pub fn (mut f Fmt) struct_init(it ast.StructInit) {
 		}
 		f.comments(it.pre_comments, inline: true, has_nl: true, level: .indent)
 		f.indent++
-		single_line_short_args := use_short_args && it.fields.len < 4
-		if use_short_args && !single_line_short_args {
-			f.writeln('')
-		}
+		mut short_args_multiline := false
+		mut field_start_positions := []int{}
 		for i, field in it.fields {
+			field_start_positions << f.out.len
 			f.write('$field.name: ')
 			f.prefix_expr_cast_expr(field.expr)
+			if field.expr is ast.StructInit {
+				short_args_multiline = true
+			}
 			f.comments(field.comments, inline: true, has_nl: false, level: .indent)
-			if single_line_short_args {
+			if use_short_args {
 				if i < it.fields.len - 1 {
 					f.write(', ')
 				}
@@ -1874,6 +1879,18 @@ pub fn (mut f Fmt) struct_init(it ast.StructInit) {
 				f.writeln('')
 			}
 			f.comments(field.next_comments, inline: false, has_nl: true, level: .keep)
+		}
+		if use_short_args {
+			if f.line_len > max_len[3] || short_args_multiline {
+				mut fields := []string{}
+				for pos in field_start_positions.reverse() {
+					fields << f.out.cut_last(f.out.len - pos).trim_suffix(', ')
+				}
+				f.writeln('')
+				for field in fields.reverse() {
+					f.writeln(field)
+				}
+			}
 		}
 		f.indent--
 		if !use_short_args {
@@ -1972,4 +1989,15 @@ fn (mut f Fmt) is_external_name(name string) bool {
 		return true
 	}
 	return false
+}
+
+fn (f Fmt) get_modname_prefix(mname string) (string, string) {
+	// ./tests/proto_module_importing_vproto_keep.vv to know, why here is checked for ']' and '&'
+	if !mname.contains(']') && !mname.contains('&') {
+		return mname, ''
+	}
+	after_rbc := mname.all_after_last(']')
+	after_ref := mname.all_after_last('&')
+	modname := if after_rbc.len < after_ref.len { after_rbc } else { after_ref }
+	return modname, mname.trim_suffix(modname)
 }
