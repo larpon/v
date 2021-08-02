@@ -62,6 +62,26 @@ pub fn parse_text(text string) Doc {
 	}
 }
 
+pub fn find(key string = none, value: Any = none) Any {
+	if key != '' {
+		return key
+	} else {
+		return value
+	}
+
+	return value
+}
+
+pub fn find_all(key string = none, value: Any = none) Any {
+	if key != '' {
+		return key	
+	} else {
+		return value
+	}
+
+	return value
+}
+
 // parse is a convenience function that parses the TOML document provided in `input`.
 // parse automatically try to determine if type of `input` is a file or text.
 // For explicit parsing of input see `parse_file` or `parse_text`.
