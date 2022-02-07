@@ -42,5 +42,7 @@ jobs:
           echo "old head: $(head -n1 /tmp/o_v.txt)"
           if [[ ${count_new} -gt ${count_old} ]]; then
             echo "The following $((count_new-count_old)) function(s) is introduced with no documentation:"
-            diff /tmp/n_v.txt /tmp/o_v.txt ## diff does exit(1) when files are different
+            #diff /tmp/n_v.txt /tmp/o_v.txt ## diff does exit(1) when files are different
+            sort /tmp/n_v.txt /tmp/o_v.txt | uniq -u
+            exit 1
           fi
