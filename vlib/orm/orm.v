@@ -153,6 +153,9 @@ pub interface Connection {
 	last_id() Primitive
 }
 
+pub fn undoc_test_fn() {
+}
+
 pub fn orm_stmt_gen(table string, para string, kind StmtKind, num bool, qm string, start_pos int, data QueryData, where QueryData) string {
 	mut str := ''
 
