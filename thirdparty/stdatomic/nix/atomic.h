@@ -62,7 +62,15 @@ extern void __atomic_thread_fence (int memory_order);
     #define atomic_thread_fence(order) _V_atomic_thread_fence(order)
     #define __atomic_thread_fence(order) _V_atomic_thread_fence(order)
 #else
-    #define atomic_thread_fence(order) __atomic_thread_fence(order)
+    // #define atomic_thread_fence(order) __atomic_thread_fence(order)
+    #define __atomic_thread_fence(order) atomic_thread_fence(order)
+    // NOTE: changing to the above fixes some tcc error on newer glibc linux distros:
+    // ```
+    // cc: /usr/lib/libc_nonshared.a: error: section type conflict: .note.GNU-stack 01 <> 07
+    // cc: /usr/lib/libc_nonshared.a: error: section type conflict: .note.GNU-stack 01 <> 07
+    // cc: tcc: error: /usr/lib/libc.so: unrecognized file type
+    // cc: tcc: error: undefined symbol 'atexit'
+    // ```
 #endif
 #endif
 
